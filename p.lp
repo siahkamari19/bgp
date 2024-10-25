@@ -1,4 +1,4 @@
-%% Rule 1: Capture domain constants
+% Rule 1: Capture domain constants
 dom(a).
 
 % Rule 2: Capture database facts
