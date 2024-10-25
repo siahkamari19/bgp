@@ -25,3 +25,5 @@ q(X, tss) :- q(X, td), not q(X, fa).
 % Rule 7: Denial constraints to avoid contradictory states
 :- s(X, ta), s(X, fa).
 :- q(X, ta), q(X, fa).
+
+%Mohammad
