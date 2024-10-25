@@ -1,4 +1,4 @@
-% Direct path as known facts
+%% Direct path as known facts
 r((1..3,0)).
 
 1{ r((1,2,0)) ; r((2,3,0)) ; r((3,1,0)) }2.
