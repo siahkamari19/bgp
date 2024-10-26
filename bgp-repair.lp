@@ -68,3 +68,6 @@ path((4,3,0)) :- rout((4,3,0)), not rout((4,2,0)), swap(4,t).
 :- path((2,0)), path((2,1,0)).
 :- path((3,0)), path((3,4,2,0)).
 :- path((4,2,0)), path((4,3,0)).
+
+#show path/1.
+#show swap/2.
