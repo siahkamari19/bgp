@@ -1,54 +1,201 @@
-Program Overview
-This program models route selection in a network where nodes use path preferences to select their routes. The program uses direct routes (base connections) and indirect routes (announced by neighboring nodes) to generate preferred paths. It also includes a "repair" function (swap) that switches path preferences to resolve potential instability or oscillation issues within the network.
+ASP Program: Stable Path Problem Repair for BGP Oscillations
 
-Code Explanation
 
-Direct Routes:
-rout((Node, Destination)) facts define known direct routes for the network. For example:
+This ASP program models a repair strategy for resolving oscillations and instabilities in a network using the Stable Path Problem (SPP) formalism. The program leverages route announcements, preferences, and a swap function to alter node preferences dynamically, helping nodes reach a stable configuration even when initial path preferences create instability.
 
-rout((1,0)).
-rout((2,0)).
-rout((3,0)).
+Program Structure and Rules
 
-These routes represent connections that each node can use directly to reach a destination, indicated as a known fact.
+The program consists of several rules that define:
+
+Direct Routes for each node (known direct connections).
+Indirect Routes learned from neighboring nodes.
+Path Preferences for each node.
+Repair Mechanism (swap) to resolve conflicts and oscillations.
+Constraints to ensure logical consistency (only one path selected at a time).
+
+Key Components
+
+Direct Routes (rout facts):
+
+Define base connections between nodes.
+
+Example: rout((1,0)). indicates that Node 1 has a direct route to the destination 0.
 
 Indirect Routes:
-The program models indirect routes that nodes learn from neighbors via path announcements:
 
-rout((2,1,0)) :- path((1,0)).
+Model routes learned from neighbors, mimicking BGP announcements.
 
-Here, Node 2 learns the route (2,1,0) if Node 1 is using (1,0). This process mimics routing announcements in real-world networks, where nodes share preferred paths with each other.
+Example: rout((2,1,0)) :- path((1,0)). means Node 2 learns the route (2,1,0) if Node 1 selects (1,0).
 
-Preferences (pref) and Repair (swap):
-Each node has a preferred path, given by pref, and an alternative path:
+Preferences (pref):
 
-pref(1, (1,3,0), (1,0)) :- swap(4,f).
+Each node has a preferred route based on criteria like path length, policy, or reliability.
 
-swap(Node, t/f) is a repair function used to swap preferences if oscillations or routing instabilities are detected. For example, swap(1, t) switches Node 1’s preferred path between options (1,3,0) and (1,0).
+Example: pref(1, (1,3,0), (1,0)) :- swap(4,f). states that Node 1 prefers the path (1,3,0) over (1,0), subject to the swap status.
 
-The swap predicate modifies path selection dynamically by acting as a disjunction, which allows nodes to alter their chosen path based on stability requirements.
+Repair Mechanism (swap):
 
-Path Ranking Functions:
-The path predicate ranks routes based on preference, factoring in swap to influence the node’s selection. The program structure ensures that each node selects its preferred path unless the repair function (swap) is triggered:
+swap(Node, t/f) toggles between preferred and alternative paths, helping prevent oscillation.
 
-path((1,0)) :- rout((1,0)), not rout((1,3,0)), swap(1,f).
+Example: swap(1, t) swaps Node 1's path to an alternative route if instability is detected.
 
-This line indicates that Node 1 selects (1,0) as its path when swap(1, f) is true, implying no repair action, and no route (1,3,0) is known.
+Path Ranking and Selection (path):
 
-Constraints to Prevent Dual Path Selection:
-The following constraints ensure that a node cannot select more than one path at a time, maintaining logical consistency:
+Based on preferences and swap state, a node selects its path.
 
-:- path((1,0)), path((1,3,0)).
+Example: path((1,0)) :- rout((1,0)), not rout((1,3,0)), swap(1,f). indicates Node 1 selects (1,0) if swap(1,f) and no route (1,3,0) exists.
 
-These constraints prevent multiple paths from being simultaneously valid for the same node.
+Constraints:
 
-Notable Features
+Enforce that each node can select only one route at a time.
 
-Fault Tolerance with swap:
-The program’s design allows each node to alter path preferences if oscillation or instability occurs, simulating a fault-tolerant repair mechanism.
+Example: :- path((1,0)), path((1,3,0)). prevents Node 1 from selecting both paths simultaneously.
 
-Extensible Routing Logic:
-The structure allows for easy expansion to include additional nodes or complex routing policies, with swap providing adaptive repairs.
+Repair Rules Example (Inspired by BGP Oscillation)
 
-Example Usage
-To run this program, load it into an ASP solver (e.g., clingo) and observe how paths are selected under different swap configurations. You can adjust the direct routes, indirect routes, or swap conditions to see how the network adjusts to maintain stability.
+This section captures the inspired code for a simpler repair program with conflict resolution:
+
+
+% Rule 1: Define domain constants
+dom(a).
+
+% Rule 2: Define database facts
+s(a, td).
+
+% Rule 3: Repair q(X) false state by altering s(X) or q(X)
+s(X, fa) | q(X, ta) :- s(X, ts), q(X, fa), dom(X).
+
+% Rule 4: Repair q(X) not true in database by changing s(X) or q(X)
+s(X, fa) | q(X, ta) :- s(X, ts), not q(X, td), dom(X).
+
+% Rule 5: Capture true states in the program for s and q
+s(X, ts) :- s(X, td), dom(X).
+s(X, ts) :- s(X, ta), dom(X).
+q(X, ts) :- q(X, td), dom(X).
+q(X, ts) :- q(X, ta), dom(X).
+
+% Rule 6: Capture repaired true states for s and q
+s(X, tss) :- s(X, ta).
+s(X, tss) :- s(X, td), not s(X, fa).
+q(X, tss) :- q(X, ta).
+q(X, tss) :- q(X, td), not q(X, fa).
+
+% Rule 7: Denial constraints to prevent contradictions
+:- s(X, ta), s(X, fa).
+:- q(X, ta), q(X, fa).
+
+Program Behavior and Example Output
+
+When executed, the program generates multiple stable configurations, each representing a possible repair state. Below are example outputs illustrating different stable models:
+
+Output 1:
+
+Answer: 1
+rout((1,0)) rout((2,0)) rout((3,0))
+pref(3,(3,4,2,0),(3,0)) swap(3,f) swap(4,f)
+pref(4,(4,3,0),(4,2,0)) pref(2,(2,1,0),(2,0))
+swap(2,f) pref(1,(1,3,0),(1,0)) swap(1,f)
+path((2,0)) path((3,0)) rout((4,3,0)) rout((4,2,0))
+rout((1,3,0)) path((4,3,0)) path((1,3,0))
+Output 2 (with different swap configuration):
+
+Answer: 2
+rout((1,0)) rout((2,0)) rout((3,0))
+pref(3,(3,4,2,0),(3,0)) swap(3,f) swap(4,t)
+pref(4,(4,2,0),(4,3,0)) swap(1,t)
+pref(1,(1,0),(1,3,0)) path((1,0))
+swap(2,t) pref(2,(2,0),(2,1,0))
+path((2,0)) rout((3,4,2,0)) rout((2,1,0))
+rout((4,2,0)) path((4,2,0)) path((3,4,2,0))
+
+These outputs reflect different path selections based on the swap conditions, indicating the program's ability to adaptively resolve conflicts.
+
+Usage Instructions
+
+Clone the repository.
+Run the program using an ASP solver like Clingo to observe the behavior under various swap configurations.
+Adjust paths or swap states to explore different stable configurations and see the effect of repair actions on network stability.
+
+
+Program b.lp Overveiw:
+
+This Answer Set Programming (ASP) model simulates a simplified network routing scenario where each node (1, 2, 3) determines its best path based on direct and indirect routes. The program is structured as follows:
+
+Direct Paths as Known Facts:
+The direct paths between nodes and the destination (0) are specified initially. The clause r((1..3,0)) declares that each node (1 through 3) has a direct route to node 0.
+
+Indirect Paths Generated by Route Announcements:
+Indirect paths are established based on route announcements by neighboring nodes, where r((1,2,0)) :- b((2,0)) means node 1 will consider an indirect path through node 2 if node 2 has a direct route to node 0.
+
+Ranking Function for Permitted Paths:
+The b predicate identifies the best path each node selects, preferring direct paths when available. The rules determine whether a direct path (b((1,0))) or an indirect path (e.g., b((1,2,0))) is preferred based on the availability of route options.
+
+Constraints:
+To avoid selecting multiple routes simultaneously, constraints enforce that only one permitted path per node is marked as the best path.
+
+Oscillation and Instability:
+This program intentionally generates oscillating behavior. Due to mutual dependencies among node preferences, routing decisions may continually shift, preventing convergence to a stable routing state. This oscillation demonstrates how ASP can model nonmonotonic reasoning in network routing, where preferences may repeatedly change in response to other nodes’ updates.
+
+Goal:
+By examining oscillation in this program, we aim to investigate stability issues in routing and use ASP to analyze these oscillations rigorously.
+
+
+Program p.lp Overview:
+
+This ASP program models a repair mechanism for database entries, specifically for entities s and q over domain constants. The program applies logical rules to ensure consistent states by modifying values of s and q when contradictions are identified. This repair mechanism can be useful in domains requiring automatic data validation or correction.
+
+The logic captures conditions under which facts (s and q) can be true, false, or require modification to maintain consistency.
+
+Rules and Structure
+
+Rule 1: Capture Domain Constants
+
+Declares constants in the domain, such as dom(a).
+
+Rule 2: Capture Database Facts
+
+Defines known facts for the database, e.g., s(a, td) represents that s(a) is true in the initial data.
+
+Rule 3: Repair Mechanism for q(X) False
+
+When q(X) is false (q(X, fa)) and s(X) is true in the source (s(X, ts)), the program allows repair by either making s(X) false or q(X) true, ensuring consistency.
+
+Rule 4: Repair Mechanism for q(X) Undefined
+
+When q(X) does not hold true (not q(X, td)) in the data, the program allows repair by either making s(X) false or q(X) true.
+
+Rule 5: Capturing Atoms True in the Program
+
+Determines when s or q is true in the program based on their status in the database (td) or after a repair (ta).
+
+Rule 6: Capturing Atoms True in Repairs
+
+Sets conditions for atoms to hold true in the repair states (tss), ensuring non-false status after repair.
+
+Rule 7: Denial Constraints to Prevent Contradictory States
+
+Enforces that no atom can be simultaneously true and false, which would result in a contradiction.
+
+Repair Mechanism
+
+The rules attempt to resolve conflicts in the data by adjusting the states of s and q. This repair is achieved by allowing flexibility to either:
+
+Change the truth state of s(X) when q(X) is false or undefined.
+
+Make q(X) true if it conflicts with existing data constraints.
+
+Denial Constraints
+
+These constraints are crucial for program stability:
+
+:- s(X, ta), s(X, fa). ensures that s(X) cannot be both true and false.
+:- q(X, ta), q(X, fa). ensures that q(X) cannot be both true and false.
+
+To run this program:
+
+Clone this repository.
+Use an ASP solver like Clingo to process the .lp file.
+This program will output the states of s and q across the domain after performing repairs to eliminate inconsistencies.
+
+Example
+Given the input data, this ASP model identifies and applies necessary repairs, producing stable models that reflect consistent states for s and q.
