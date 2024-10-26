@@ -1,3 +1,6 @@
+Program bgp-repair.lp Overview:
+
+
 ASP Program: Stable Path Problem Repair for BGP Oscillations
 
 
@@ -117,7 +120,12 @@ Run the program using an ASP solver like Clingo to observe the behavior under va
 Adjust paths or swap states to explore different stable configurations and see the effect of repair actions on network stability.
 
 
-Program b.lp Overveiw:
+
+
+
+
+Program oscilation.lp Overveiw:
+
 
 This Answer Set Programming (ASP) model simulates a simplified network routing scenario where each node (1, 2, 3) determines its best path based on direct and indirect routes. The program is structured as follows:
 
@@ -140,7 +148,12 @@ Goal:
 By examining oscillation in this program, we aim to investigate stability issues in routing and use ASP to analyze these oscillations rigorously.
 
 
-Program p.lp Overview:
+
+
+
+
+Program repair.lp Overview:
+
 
 This ASP program models a repair mechanism for database entries, specifically for entities s and q over domain constants. The program applies logical rules to ensure consistent states by modifying values of s and q when contradictions are identified. This repair mechanism can be useful in domains requiring automatic data validation or correction.
 
