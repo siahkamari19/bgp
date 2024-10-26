@@ -60,7 +60,7 @@ path((3,4,2,0)) :- rout((3,4,2,0)), not rout((3,0)), swap(3,t).
 path((4,2,0)) :- rout((4,2,0)), not rout((4,3,0)), swap(4,f).     %Naghty
 path((4,3,0)) :- rout((4,3,0)), swap(4,f).
 
-path((4,2,0)) :- rout((4,2,0)), swap(4,t).                     %BadGadget
+path((4,2,0)) :- rout((4,2,0)), swap(4,t).                        %BadGadget
 path((4,3,0)) :- rout((4,3,0)), not rout((4,2,0)), swap(4,t).
 
 % Add constraints to prevent both paths from being selected
