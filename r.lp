@@ -32,7 +32,7 @@ pref(3, (3,4,2,0), (3,0)).
 
 1{pref(4, (4,3,0), (4,2,0)) ; pref(4, (4,2,0), (4,3,0))}1 :- swap(3,f).
 
-% Ranking function of the permitted paths b
+% Ranking function of the permitted paths
 % Node 1:
 path((1,0)) :- rout((1,0)), not rout((1,3,0)), swap(1,f).
 path((1,3,0)) :- rout((1,3,0)), swap(1,f).
